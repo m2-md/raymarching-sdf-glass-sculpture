@@ -24,7 +24,7 @@ export async function runConfig(
 ): Promise<RunResult> {
   renderer.useStepBudget(config.maxSteps);
   renderer.setRefract(config.refract);
-  renderer.setTime(MEASURE_TIME); // sabit poz: her koşu aynı kareyi çiziyor
+  renderer.setTime(MEASURE_TIME); // fixed pose: each run draws identical frame
 
   for (let i = 0; i < warmup; i++) await renderer.drawOnce(false);
 
@@ -63,7 +63,7 @@ export interface MeasureReport {
   steps128: RunResult;
   noRefract64: { gpuMsMedian: number; wallMsMedian: number };
   ratio128over64: number;
-  /** Oranın hangi saatten çıktığı. Uzantı yoksa "wall" (rAF deltası). */
+  /** Timer source for the ratio. "wall" (rAF delta) if extension missing. */
   ratioSource: "gpu" | "wall";
   stepStats: {
     budget64: StepSummary;
@@ -81,14 +81,14 @@ function round(x: number, digits: number): number {
 
 function rendererName(gl: WebGL2RenderingContext): string {
   const ext = gl.getExtension("WEBGL_debug_renderer_info");
-  if (!ext) return "bilinmiyor";
+  if (!ext) return "unknown";
   const name = gl.getParameter(
     (ext as { UNMASKED_RENDERER_WEBGL: number }).UNMASKED_RENDERER_WEBGL,
   );
-  return typeof name === "string" && name.length > 0 ? name : "bilinmiyor";
+  return typeof name === "string" && name.length > 0 ? name : "unknown";
 }
 
-/** Adım istatistiği koşusu: birkaç kare çiz, sonuncusunu oku. */
+/** Step statistics run: draw several frames, read back the last one. */
 async function runStepStats(
   renderer: Renderer,
   config: { maxSteps: 64 | 128; k: number },
@@ -115,8 +115,8 @@ function roundRun(r: RunResult): RunResult {
 }
 
 /**
- * Deterministik ölçüm modu (`?measure=1`).
- * Sabit arka tampon, sabit zaman, sabit kamera; sonunda konsola TEK satır.
+ * Deterministic measurement mode (`?measure=1`).
+ * Fixed backbuffer, fixed time, fixed camera; logs single line to console.
  */
 export async function runMeasurement(
   renderer: Renderer,

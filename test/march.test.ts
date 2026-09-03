@@ -6,28 +6,28 @@ import type { Vec3 } from "../src/sdf";
 const unitSphere = (p: Vec3) => sdSphere(p, 1);
 
 describe("march", () => {
-  it("dik gelen ışın iki map çağrısında yakınsar", () => {
+  it("perpendicular ray converges in two map calls", () => {
     const res = march(unitSphere, [0, 0, -4], [0, 0, 1], { maxSteps: 64 });
     expect(res.hit).toBe(true);
-    expect(res.steps).toBe(2); // 4-1=3 ilerle, sonra tam yüzeydesin
+    expect(res.steps).toBe(2); // advance 4-1=3, then exactly on surface
     expect(res.t).toBeCloseTo(3, 3);
   });
 
-  it("teğet geçen ışın bütçenin tamamını harcar ve çarpmaz", () => {
-    // Küreyi 0.02 birimle ıskalayan ışın: alan hep küçük ama hiç sıfır değil
+  it("tangent ray exhausts entire budget and does not hit", () => {
+    // Ray missing sphere by 0.02 units: step is always small but never zero
     const res = march(unitSphere, [0, 1.02, -4], [0, 0, 1], { maxSteps: 24 });
     expect(res.hit).toBe(false);
-    expect(res.steps).toBe(24); // tavan
+    expect(res.steps).toBe(24); // ceiling
   });
 
-  it("küreyi geniş kaçıran ışın MAX_DIST ile çıkar, bütçeyi bitirmez", () => {
+  it("ray missing sphere widely exits with MAX_DIST, does not exhaust budget", () => {
     const res = march(unitSphere, [0, 6, -4], [0, 0, 1], { maxSteps: 128 });
     expect(res.hit).toBe(false);
     expect(res.t).toBeGreaterThan(DEFAULT_MAX_DIST);
     expect(res.steps).toBeLessThan(128);
   });
 
-  it("steps her zaman 1..maxSteps aralığında kalır", () => {
+  it("steps always remain within 1..maxSteps range", () => {
     let seed = 1337;
     const rnd = () => {
       seed = (seed * 1664525 + 1013904223) >>> 0;
@@ -50,22 +50,22 @@ const twoSpheres = (k: number) => (p: Vec3) => {
   return k === 0 ? Math.min(a, b) : smin(a, b, k);
 };
 
-describe("smin topolojiyi değiştirir", () => {
-  it("k=0'da aradaki delikten geçen ışın, k=0.5'te köprüye çarpar", () => {
+describe("smin changes topology", () => {
+  it("ray passing through hole at k=0 hits bridge at k=0.5", () => {
     const ray = { ro: [0, 0, -4] as Vec3, rd: [0, 0, 1] as Vec3 };
     const sharp = march(twoSpheres(0), ray.ro, ray.rd, { maxSteps: 128 });
     const blended = march(twoSpheres(0.5), ray.ro, ray.rd, { maxSteps: 128 });
 
-    expect(sharp.hit).toBe(false); // iki küre arasında 0.2 birimlik açıklık var
-    expect(blended.hit).toBe(true); // karışım o açıklığı kapattı
-    // Köprü kürelerin merkez düzleminden ÖNCE başlıyor: 0 < t < 4
+    expect(sharp.hit).toBe(false); // 0.2 unit opening between two spheres
+    expect(blended.hit).toBe(true); // blend closed that opening
+    // Bridge begins before sphere center plane: 0 < t < 4
     expect(blended.t).toBeGreaterThan(3.5);
     expect(blended.t).toBeLessThan(4);
   });
 
-  it("alan alt sınıra düşünce aynı bütçede daha az yol alınır", () => {
-    // İki küreyi de ıskalayan ışın: k=0 ve k=0.5 için de çarpma yok,
-    // ama smin alanı aşağı çektiği için adımlar kısalıyor.
+  it("traverses less distance within same budget when step drops to lower bound", () => {
+    // Ray missing both spheres: no hit for either k=0 or k=0.5,
+    // but steps shrink as smin pulls distance down.
     const ro: Vec3 = [0, 0.95, -4];
     const rd: Vec3 = [0, 0, 1];
     const sharp = march(twoSpheres(0), ro, rd, { maxSteps: 6 });

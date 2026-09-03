@@ -19,9 +19,9 @@ function normalize(v: Vec3): Vec3 {
 }
 
 /**
- * GLSL `rayDirection()` aynası (src/shaders/scene.frag.glsl).
- * fragCoord piksel merkezidir; res.y'ye bölmek dikey görüş açısını
- * en-boy oranından bağımsız kılar.
+ * Mirror of GLSL `rayDirection()` (src/shaders/scene.frag.glsl).
+ * fragCoord is pixel center; dividing by res.y makes vertical FOV
+ * independent of aspect ratio.
  */
 export function rayDirection(
   fragCoord: readonly [number, number],
@@ -45,7 +45,7 @@ export function rayDirection(
   ]);
 }
 
-/** Demo kamerası: y ekseni etrafında yörünge. Saf fonksiyon. */
+/** Demo camera: orbits around y axis. Pure function. */
 export function orbitCamera(
   angle: number,
   radius: number,

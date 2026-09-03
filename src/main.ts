@@ -13,7 +13,7 @@ import {
 
 function need<T extends Element>(selector: string): T {
   const el = document.querySelector<T>(selector);
-  if (!el) throw new Error(`DOM düğümü yok: ${selector}`);
+  if (!el) throw new Error(`DOM node not found: ${selector}`);
   return el;
 }
 
@@ -36,7 +36,7 @@ try {
 } catch (error) {
   canvas.remove();
   banner.hidden = false;
-  banner.textContent = `Bu tarayıcıda WebGL2 yok, demo çalışamaz. (${String(error)})`;
+  banner.textContent = `WebGL2 is not supported in this browser, demo cannot run. (${String(error)})`;
   throw error;
 }
 
@@ -50,7 +50,7 @@ canvas.addEventListener(
     event.preventDefault();
     setRunning(false);
     banner.hidden = false;
-    banner.textContent = "WebGL bağlamı kayboldu. Sayfayı yenileyin.";
+    banner.textContent = "WebGL context lost. Please reload the page.";
     console.warn("webglcontextlost");
   },
   false,
@@ -68,12 +68,12 @@ function loop(now: number) {
 function setRunning(next: boolean): void {
   if (next === running) return;
   running = next;
-  toggleButton.textContent = running ? "Dur" : "Devam";
+  toggleButton.textContent = running ? "Pause" : "Resume";
   if (running) {
     hud.setTimerSource(renderer.timer.available ? "gpu" : "raf");
     frameId = requestAnimationFrame(loop);
   } else {
-    hud.setNote("Döngü duraklatıldı — sayaçlar donduruldu.");
+    hud.setNote("Loop paused — counters frozen.");
     cancelAnimationFrame(frameId);
   }
 }
@@ -163,7 +163,7 @@ const measureMode = new URLSearchParams(location.search).get("measure") === "1";
 if (measureMode) {
   document.body.classList.add("measuring");
   toggleButton.disabled = true;
-  hud.setNote("Deterministik ölçüm koşuyor… (sekmeyi ön planda tutun)");
+  hud.setNote("Deterministic benchmark running… (keep tab active)");
   running = false;
   runMeasurement(renderer).then((report) => {
     console.log(`MEASURE ${JSON.stringify(report)}`);

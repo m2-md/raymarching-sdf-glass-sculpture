@@ -34,14 +34,14 @@ export class GpuTimer {
     this.active = null;
   }
 
-  // Her karede çağrılır. Sonuçlar birkaç kare gecikmeyle gelir; beklemek YASAK.
+  // Called each frame. Results arrive with several frames of latency; blocking is forbidden.
   poll(): void {
     if (!this.ext) return;
     const { gl } = this;
 
     if (gl.getParameter(this.ext.GPU_DISJOINT_EXT)) {
-      // GPU saati kesildi (güç durumu değişimi, bağlam anahtarlama):
-      // eldeki bütün ölçümler çöp.
+      // GPU clock disjoint event (power state change, context switch):
+      // discard all pending measurements.
       for (const query of this.pending) this.free.push(query);
       this.pending.length = 0;
       return;
@@ -57,7 +57,7 @@ export class GpuTimer {
     }
   }
 
-  /** Yeni bir koşuya girerken biriken örnekleri at. */
+  /** Discard accumulated samples when entering a new run. */
   reset(): void {
     this.samplesMs.length = 0;
   }

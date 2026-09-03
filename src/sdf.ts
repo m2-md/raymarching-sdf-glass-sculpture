@@ -42,7 +42,7 @@ export function mix(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-/** GLSL tarafındaki `smin` ile birebir aynı formül (scene.frag.glsl). */
+/** Exact formula matching GLSL `smin` (scene.frag.glsl). */
 export const SMIN_K_MIN = 1e-4;
 
 export function smin(a: number, b: number, k: number): number {

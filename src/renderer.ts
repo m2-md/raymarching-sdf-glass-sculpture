@@ -106,7 +106,7 @@ export function createRenderer(canvas: HTMLCanvasElement): Renderer {
     powerPreference: "high-performance",
     preserveDrawingBuffer: false,
   });
-  if (!context) throw new Error("WebGL2 yok");
+  if (!context) throw new Error("WebGL2 not available");
   const gl: WebGL2RenderingContext = context;
 
   const bundles: Record<StepBudget, ProgramBundle> = {
@@ -115,10 +115,10 @@ export function createRenderer(canvas: HTMLCanvasElement): Renderer {
   };
 
   const vao = gl.createVertexArray();
-  gl.bindVertexArray(vao); // attribute yok, sadece "bir VAO bağlı olsun" diye
+  gl.bindVertexArray(vao); // no attributes, just to have a bound VAO
 
-  gl.disable(gl.DEPTH_TEST); // derinlik yok, tek üçgen var
-  gl.disable(gl.DITHER); // adım sayısını bayt olarak geri okuyacağız, dithering bozar
+  gl.disable(gl.DEPTH_TEST); // no depth, single triangle
+  gl.disable(gl.DITHER); // step count will be read back as bytes, dithering would corrupt it
   gl.disable(gl.CULL_FACE);
   gl.disable(gl.BLEND);
 

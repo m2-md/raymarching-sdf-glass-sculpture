@@ -1,8 +1,8 @@
 #version 300 es
-// DİKKAT: "#version 300 es" bu dosyanın İLK satırı olmak zorunda.
-// MAX_STEPS / SHADOW_STEPS / INNER_STEPS burada TANIMLI DEĞİL;
-// src/program.ts icindeki buildFragmentSource() onlari 1. satirdan
-// hemen SONRA enjekte eder.
+// NOTE: "#version 300 es" must be the FIRST line of this file.
+// MAX_STEPS / SHADOW_STEPS / INNER_STEPS are NOT defined here;
+// buildFragmentSource() in src/program.ts injects them immediately
+// AFTER line 1.
 precision highp float;
 
 uniform vec2 uResolution;
@@ -42,21 +42,21 @@ float sdSphere(vec3 p, float r) {
 }
 
 float sdBox(vec3 p, vec3 b) {
-  vec3 q = abs(p) - b; // simetriyi kullan: sadece pozitif sekizlik yeter
-  // Dışarıdaysak taşan eksenlerin uzunluğu, içerideysek en yakın yüzeye mesafe
+  vec3 q = abs(p) - b; // use symmetry: positive octant is sufficient
+  // Outside: length of overflowing axes; Inside: distance to nearest surface
   return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
 }
 
 float sdTorus(vec3 p, float major, float minor) {
-  vec2 q = vec2(length(p.xz) - major, p.y); // önce halkaya, sonra kesite
+  vec2 q = vec2(length(p.xz) - major, p.y); // first to ring, then to cross-section
   return length(q) - minor;
 }
 
 float opUnion(float a, float b) { return min(a, b); }
-float opSubtract(float a, float b) { return max(-a, b); } // a'yı b'den oy
+float opSubtract(float a, float b) { return max(-a, b); } // carve a from b
 float opIntersect(float a, float b) { return max(a, b); }
 
-// k: karışım yarıçapı (dünya birimi). k=0 iken düz min'e döner.
+// k: blend radius (world units). Reverts to plain min when k=0.
 float smin(float a, float b, float k) {
   float kk = max(k, 1e-4);
   float h = clamp(0.5 + 0.5 * (b - a) / kk, 0.0, 1.0);
@@ -65,7 +65,7 @@ float smin(float a, float b, float k) {
 
 float map(vec3 p) {
   vec3 q = p;
-  q.xz = rot(uTime * 0.25) * q.xz; // heykeli değil, uzayı döndürüyoruz
+  q.xz = rot(uTime * 0.25) * q.xz; // rotate space, not the sculpture itself
 
   float sphere = sdSphere(q - vec3(0.0, 0.34, 0.0), 0.62);
 
@@ -80,14 +80,14 @@ float map(vec3 p) {
   float d = smin(sphere, box, uK);
   d = smin(d, torus, uK * 0.75);
 
-  // İç boşluk: camın kalınlığı buradan doğuyor, kırılma bunu görecek
+  // Cavity: glass thickness emerges here, refraction will encounter this
   float cavity = sdSphere(q - vec3(0.0, 0.20, 0.0), 0.34);
   return opSubtract(cavity, d);
 }
 
 vec3 rayDirection(vec2 fragCoord, vec2 res, vec3 ro, vec3 ta, float fovY) {
-  // Ekran merkezine göre, YÜKSEKLİĞE bölünmüş koordinat.
-  // res.y'ye bölmek dikey görüş açısını en-boy oranından bağımsız kılar.
+  // Coordinate relative to screen center, divided by HEIGHT.
+  // Dividing by res.y makes vertical FOV independent of aspect ratio.
   vec2 uv = (fragCoord - 0.5 * res) / res.y;
 
   vec3 forward = normalize(ta - ro);
@@ -106,9 +106,9 @@ Hit marchScene(vec3 ro, vec3 rd) {
   for (int i = 0; i < MAX_STEPS; i++) {
     float d = map(ro + rd * t);
     steps = i + 1;
-    if (d < EPS * t) { hit = true; break; } // yakınsadık
-    t += d;                                 // güvenli adım = mesafenin kendisi
-    if (t > MAX_DIST) break;                // kaçtı
+    if (d < EPS * t) { hit = true; break; } // converged
+    t += d;                                 // safe step = distance itself
+    if (t > MAX_DIST) break;                // escaped
   }
   return Hit(t, steps, hit);
 }
@@ -127,7 +127,7 @@ float softShadow(vec3 ro, vec3 rd, float tmin, float tmax, float k) {
   float t = tmin;
   for (int i = 0; i < SHADOW_STEPS; i++) {
     float h = map(ro + rd * t);
-    res = min(res, k * h / t); // yüzeye teğet geçiş = yumuşak yarı gölge
+    res = min(res, k * h / t); // grazing pass near surface = soft penumbra
     t += clamp(h, 0.03, 0.4);
     if (res < 0.004 || t > tmax) break;
   }
@@ -143,7 +143,7 @@ vec3 sky(vec3 rd) {
 
 vec3 background(vec3 ro, vec3 rd, bool withShadow) {
   if (rd.y < -0.0001) {
-    float t = (PLANE_Y - ro.y) / rd.y; // ışın-düzlem kesişimi, döngü yok
+    float t = (PLANE_Y - ro.y) / rd.y; // ray-plane intersection, no loop
     if (t > 0.0 && t < MAX_DIST) {
       vec3 p = ro + rd * t;
       float c = mod(floor(p.x * 0.8) + floor(p.z * 0.8), 2.0);
@@ -160,13 +160,13 @@ vec3 background(vec3 ro, vec3 rd, bool withShadow) {
 vec3 marchInside(vec3 p, vec3 rd, out vec3 exitNormal) {
   float t = 0.02;
   for (int i = 0; i < INNER_STEPS; i++) {
-    float d = -map(p + rd * t); // içeride mesafe negatif, işareti çevir
+    float d = -map(p + rd * t); // inside distance is negative, invert sign
     if (d < 0.0008) break;
-    t += max(d, 0.006); // sıfır adımda kilitlenmeyi engelle
+    t += max(d, 0.006); // prevent getting stuck on zero steps
     if (t > 6.0) break;
   }
   vec3 q = p + rd * t;
-  exitNormal = -calcNormal(q); // çıkışta normal içeri bakmalı
+  exitNormal = -calcNormal(q); // exit normal must point inward
   return q;
 }
 
@@ -183,17 +183,17 @@ vec3 shadeGlass(vec3 ro, vec3 rd, float t) {
 
   vec3 refrCol = reflCol;
   if (uRefract == 1) {
-    vec3 dirIn = refract(rd, n, 1.0 / uIOR); // hava -> cam
+    vec3 dirIn = refract(rd, n, 1.0 / uIOR); // air -> glass
     vec3 exitN;
     vec3 exitP = marchInside(p, dirIn, exitN);
 
-    vec3 dirOut = refract(dirIn, exitN, uIOR); // cam -> hava
+    vec3 dirOut = refract(dirIn, exitN, uIOR); // glass -> air
     if (dot(dirOut, dirOut) < 0.5) {
-      dirOut = reflect(dirIn, exitN); // tam iç yansıma: refract sıfır döndürür
+      dirOut = reflect(dirIn, exitN); // total internal reflection: refract returns zero
     }
     refrCol = background(exitP, dirOut, false);
 
-    // Beer-Lambert: kalın yerler daha çok renk yutar
+    // Beer-Lambert: thicker regions absorb more light
     float thickness = distance(p, exitP);
     refrCol *= exp(-thickness * vec3(0.35, 0.18, 0.10));
   }
@@ -217,7 +217,7 @@ void main() {
   Hit h = marchScene(ro, rd);
 
   if (uMode == MODE_STEPS_RAW) {
-    // Adım sayısını ham bayt olarak yaz: 128 <= 255 olduğu için kayıpsız
+    // Write step count as raw byte: lossless since 128 <= 255
     outColor = vec4(float(h.steps) / 255.0, 0.0, 0.0, 1.0);
     return;
   }

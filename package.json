@@ -2,7 +2,7 @@
   "name": "raymarching-sdf-glass-sculpture",
   "private": true,
   "version": "1.0.0",
-  "description": "Tek üçgenlik ham WebGL2 sahnesinde SDF raymarching ile cam heykel; adım sayacı, heat map ve 64'e karşı 128 adım bütçesi GPU zamanlayıcısıyla ölçülür",
+  "description": "Real-time raymarching shader in raw WebGL2: constructive solid geometry (CSG) blending, internal light absorption, total internal reflection, and step count profiling.",
   "type": "module",
   "license": "MIT",
   "scripts": {

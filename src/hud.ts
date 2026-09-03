@@ -9,20 +9,20 @@ export interface Hud {
   showMeasureReport(report: MeasureReport): void;
 }
 
-/** ÖLÇÜM: her karede donanımdan/saatten okunan değerler. */
+/** MEASUREMENT: values read from hardware/clock each frame. */
 const MEASURED = [
   ["fps", "FPS"],
-  ["frame", "kare ms"],
+  ["frame", "frame ms"],
   ["gpu", "GPU ms"],
-  ["mean", "ort. adım/piksel"],
-  ["ceiling", "tavana dayanan %"],
+  ["mean", "avg. steps/pixel"],
+  ["ceiling", "ceiling reached %"],
 ] as const;
 
-/** YAPISAL: kullanıcının seçtiği, ölçülmeyen ayarlar. */
+/** STRUCTURAL: user-selected, unmeasured settings. */
 const STRUCTURAL = [
-  ["size", "arka tampon"],
-  ["budget", "adım bütçesi"],
-  ["k", "karışım k"],
+  ["size", "backbuffer"],
+  ["budget", "step budget"],
+  ["k", "blend k"],
   ["ior", "IOR"],
 ] as const;
 
@@ -58,15 +58,15 @@ export function createHud(root: HTMLElement): Hud {
   root.textContent = "";
   const cells = new Map<string, HTMLElement>();
 
-  const measured = group("Ölçüm", "ÖLÇÜM");
+  const measured = group("Measurement", "MEASUREMENT");
   for (const [key, label] of MEASURED) cells.set(key, row(measured, label));
 
-  const structural = group("Yapılandırma", "YAPISAL");
+  const structural = group("Configuration", "STRUCTURAL");
   for (const [key, label] of STRUCTURAL) cells.set(key, row(structural, label));
 
   const note = document.createElement("div");
   note.className = "hud-note";
-  note.textContent = "GPU saati: yokluyor…";
+  note.textContent = "GPU timer: polling…";
 
   root.append(measured, structural, note);
 
@@ -99,14 +99,14 @@ export function createHud(root: HTMLElement): Hud {
       timerSource = source;
       note.textContent =
         source === "gpu"
-          ? "GPU saati: EXT_disjoint_timer_query_webgl2"
-          : "GPU saati: uzantı yok → rAF delta medyanı";
+          ? "GPU timer: EXT_disjoint_timer_query_webgl2"
+          : "GPU timer: no extension → rAF delta median";
     },
     setNote(text) {
       note.textContent = text;
     },
     showMeasureReport(report) {
-      const unit = report.timerExt ? "GPU ms" : "kare ms";
+      const unit = report.timerExt ? "GPU ms" : "frame ms";
       const t64 = report.timerExt
         ? report.steps64.gpuMsMedian
         : report.steps64.wallMsMedian;
@@ -128,7 +128,7 @@ export function createHud(root: HTMLElement): Hud {
       set("budget", "64 → 128");
       set("k", report.k.toFixed(2));
       set("ior", report.ior.toFixed(2));
-      note.textContent = `ÖLÇÜM bitti · ${report.gpu} · ${report.frames} kare · 128/64 = ${report.ratio128over64.toFixed(3)}× · ${report.timerExt ? "GPU sorgusu" : "rAF deltası"}`;
+      note.textContent = `BENCHMARK complete · ${report.gpu} · ${report.frames} frames · 128/64 = ${report.ratio128over64.toFixed(3)}× · ${report.timerExt ? "GPU query" : "rAF delta"}`;
     },
   };
 }

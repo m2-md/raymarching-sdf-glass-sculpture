@@ -11,7 +11,7 @@ function len(v: Vec3): number {
 }
 
 describe("rayDirection", () => {
-  it("merkez piksel tam olarak normalize(ta - ro) yönünü verir", () => {
+  it("center pixel yields normalize(ta - ro) direction exactly", () => {
     const res: [number, number] = [960, 540];
     const dir = rayDirection([480, 270], res, RO, TA, FOV);
     const raw: Vec3 = [TA[0] - RO[0], TA[1] - RO[1], TA[2] - RO[2]];
@@ -21,7 +21,7 @@ describe("rayDirection", () => {
     expect(dir[2]).toBeCloseTo(raw[2] / l, 12);
   });
 
-  it("her piksel için birim uzunlukta yön döndürür", () => {
+  it("returns unit length direction for every pixel", () => {
     const res: [number, number] = [960, 540];
     const pixels: [number, number][] = [
       [0, 0],
@@ -35,17 +35,17 @@ describe("rayDirection", () => {
     }
   });
 
-  it("sol ve sağ pikseller simetriktir", () => {
+  it("left and right pixels are symmetrical", () => {
     const res: [number, number] = [960, 540];
     const left = rayDirection([280, 270], res, RO, TA, FOV);
     const right = rayDirection([680, 270], res, RO, TA, FOV);
-    // Kamera -z'de, right ekseni -x yönünde; sol/sağ x bileşeni ters işaretli
+    // camera at -z, right axis in -x direction; left/right x components have opposite signs
     expect(left[0]).toBeCloseTo(-right[0], 12);
     expect(Math.abs(left[0])).toBeGreaterThan(0.1);
     expect(left[2]).toBeCloseTo(right[2], 12);
   });
 
-  it("dikey görüş açısı en-boy oranından bağımsızdır", () => {
+  it("vertical field of view is independent of aspect ratio", () => {
     const narrow = rayDirection([480, 400], [960, 540], RO, TA, FOV);
     const wide = rayDirection([960, 400], [1920, 540], RO, TA, FOV);
     expect(narrow[0]).toBeCloseTo(wide[0], 12);
@@ -53,7 +53,7 @@ describe("rayDirection", () => {
     expect(narrow[2]).toBeCloseTo(wide[2], 12);
   });
 
-  it("fovY büyüdükçe kenar ışını merkezden daha çok açılır", () => {
+  it("edge ray diverges further from center as fovY increases", () => {
     const forward: Vec3 = [0, 0, 1];
     const dot = (d: Vec3) =>
       d[0] * forward[0] + d[1] * forward[1] + d[2] * forward[2];
@@ -76,7 +76,7 @@ describe("rayDirection", () => {
 });
 
 describe("orbitCamera", () => {
-  it("yarıçapı ve yüksekliği korur", () => {
+  it("preserves radius and height", () => {
     for (const angle of [0, 0.7, -1.9, Math.PI, 5.2]) {
       const p = orbitCamera(angle, 3.4, 1.15);
       expect(Math.hypot(p[0], p[2])).toBeCloseTo(3.4, 12);
@@ -84,7 +84,7 @@ describe("orbitCamera", () => {
     }
   });
 
-  it("yarım tur sonra karşı noktaya gider", () => {
+  it("moves to opposing point after half turn", () => {
     const a = orbitCamera(0, 2, 0.5);
     const b = orbitCamera(Math.PI, 2, 0.5);
     expect(a[0]).toBeCloseTo(-b[0], 12);

@@ -2,7 +2,7 @@ export interface StepStats {
   samples: number;
   mean: number;
   max: number;
-  ceilingPct: number; // adım tavanına dayanan piksellerin yüzdesi
+  ceilingPct: number; // percentage of pixels reaching step ceiling
 }
 
 export function stepStats(pixels: Uint8Array, maxSteps: number): StepStats {
@@ -14,7 +14,7 @@ export function stepStats(pixels: Uint8Array, maxSteps: number): StepStats {
   let ceiling = 0;
 
   for (let i = 0; i < samples; i++) {
-    const steps = pixels[i * 4]; // kırmızı kanal
+    const steps = pixels[i * 4]; // red channel
     sum += steps;
     if (steps > max) max = steps;
     if (steps >= maxSteps) ceiling++;

@@ -1,9 +1,9 @@
 import type { Vec3 } from "./sdf";
 
 export interface MarchResult {
-  /** Yürüyüşün bittiği mesafe. */
+  /** Distance where raymarch ended. */
   t: number;
-  /** Harcanan `map` çağrısı sayısı (GLSL `marchScene` ile aynı semantik). */
+  /** Number of `map` invocations consumed (matches GLSL `marchScene` semantics). */
   steps: number;
   hit: boolean;
 }
@@ -15,14 +15,14 @@ export interface MarchOptions {
   epsilon?: number;
 }
 
-/** Shader sabitleriyle birebir aynı varsayılanlar. */
+/** Exact defaults matching shader constants. */
 export const DEFAULT_MIN_DIST = 0.02;
 export const DEFAULT_MAX_DIST = 24;
 export const DEFAULT_EPSILON = 0.0012;
 
 /**
- * GLSL `marchScene()` aynası. `map` parametre olduğu için sahne TypeScript'e
- * kopyalanmaz: analitik olarak doğrulanabilir alanlarla test edilebilir.
+ * Mirror of GLSL `marchScene()`. Since `map` is parameterized, scene
+ * is not duplicated into TypeScript: tested against analytically verifiable fields.
  */
 export function march(
   map: (p: Vec3) => number,
