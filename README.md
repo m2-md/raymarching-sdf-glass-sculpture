@@ -4,6 +4,8 @@
 **▶ [Live demo](https://m2-md.github.io/raymarching-sdf-glass-sculpture/)** · [Source](https://github.com/m2-md/raymarching-sdf-glass-sculpture)
 <!-- LINKS:END -->
 
+> Real-time raymarching shader in raw WebGL2: constructive solid geometry (CSG) blending, internal light absorption, total internal reflection, and step count profiling.
+
 Working code for the article "There Is Only One Triangle in the Scene: A Glass
 Sculpture with SDF Raymarching, 64 Steps vs 128". Raw WebGL2 (GLSL ES 3.00),
 TypeScript, Vite, vitest. No `three.js`, no shader library; the math on every line
@@ -200,6 +202,12 @@ src/
     scene.frag.glsl            the whole scene
 test/                          7 files, 57 tests (browserless)
 ```
+
+## Tech stack
+
+- TypeScript, Vite, Vitest, npm.
+- Raw WebGL2 (GLSL ES 3.00). No three.js, no shader library — every SDF and the march
+  loop is hand-written.
 
 ## License
 
