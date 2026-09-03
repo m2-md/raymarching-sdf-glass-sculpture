@@ -1,5 +1,9 @@
 # SDF Raymarching — Glass Sculpture · 64 vs 128
 
+<!-- LINKS:BEGIN — üretildi: scripts/sync-repo-links.py · elle düzenleme -->
+**▶ [Live demo](https://m2-md.github.io/raymarching-sdf-glass-sculpture/)** · [Source](https://github.com/m2-md/raymarching-sdf-glass-sculpture)
+<!-- LINKS:END -->
+
 Working code for the article "There Is Only One Triangle in the Scene: A Glass
 Sculpture with SDF Raymarching, 64 Steps vs 128". Raw WebGL2 (GLSL ES 3.00),
 TypeScript, Vite, vitest. No `three.js`, no shader library; the math on every line
