@@ -1,0 +1,21 @@
+{
+  "name": "raymarching-sdf-glass-sculpture",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Tek üçgenlik ham WebGL2 sahnesinde SDF raymarching ile cam heykel; adım sayacı, heat map ve 64'e karşı 128 adım bütçesi GPU zamanlayıcısıyla ölçülür",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "^3.3.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0",
+    "vitest": "^2.1.0"
+  }
+}
